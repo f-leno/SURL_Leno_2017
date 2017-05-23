@@ -1,0 +1,22 @@
+This is the home of the RSGridWorld domain, built on the burlap framework.
+
+The RewardShape.java file contains an entrypoint and is where experiments will be kicked off. All other files are auxillery, but essential, to the domain and can be altered to fit the domain's growing needs.
+
+To compile:
+$ make
+To run:
+$ ./run.sh
+
+Additional commands:
+	Create jar: It may be advantageous to create a jar for the RSGridWorld project
+	$ make
+	$ rm Coordinates.class RewardShape.class
+	$ jar cf RSGridWorld.jar *.class
+	
+	Note: if other classes are added to RewardShape.java, you will need to remove those class files as well
+
+
+To run curriculum experiments:
+On a rewardShape object, run treeExperiments(...) given a list of possible tasks.
+treeExperiments will run getTransferTree() to generate a curriculum and use it to follow through the experiments.
+
