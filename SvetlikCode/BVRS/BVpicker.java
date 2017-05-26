@@ -1,6 +1,6 @@
 import RSGridWorld.*;
+
 import java.awt.Color;
-import java.util.List;
 import java.util.*;
 
 import burlap.behavior.singleagent.*;
