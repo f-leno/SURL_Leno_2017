@@ -33,45 +33,64 @@ def get_args():
             --evaluation_duration: Number of evaluation episodes
             --seed: Seed for random procedures
             --log_folder: output folder
+            --source_folder: folder with source tasks
             --temp_folder: folder to be possibly used by the algorithm
+            --init_trials: initial trial
+            --end_trials: final trial
             --curriculum_alg: Algorithm for Curriculum generation
-            --graphics: Shows domain illustration.
+            --termination: Class for termination Condition
             
     
     """
     parser = argparse.ArgumentParser()
     parser.add_argument('-t','--task_path', default='./tasks/target.task')
     parser.add_argument('-a','--algorithm',  default='Dummy') 
-    parser.add_argument('-e','--learning_time',type=int, default=10000)
+    parser.add_argument('-e','--learning_time',type=int, default=25000)
     parser.add_argument('-te','--type_evaluation',choices=['episode','steps'], default='steps')
     parser.add_argument('-i','--evaluation_interval',type=int, default=100)
     parser.add_argument('-d','--evaluation_duration',type=int, default=2)
     parser.add_argument('-s','--seed',type=int, default=12345)
     parser.add_argument('-l','--log_folder',default='./log/')
+    parser.add_argument('-sf','--source_folder',default='./tasks/source/')
     parser.add_argument('-tf','--temp_folder',default='./temp/')
-    parser.add_argument('-et','--end_trials',type=int, default=50)
+    parser.add_argument('-it','--init_trials',type=int, default=1)
+    parser.add_argument('-et','--end_trials',type=int, default=100)
     parser.add_argument('-ca','--curriculum_alg',default='NoneCurriculum')
-    parser.add_argument('-g','--graphics',type=bool,default=False)
+    parser.add_argument('-ter','--termination',default="Termination10Episodes")
      
 
     return parser.parse_args()
 
-def keep_training(curriculum,episodes,totalSteps,parameter):
+def keep_training(task,target_task,curriculum,episodes,steps,totalEpisodes,totalSteps,parameter,termination):
     """
         Given the Curriculum, number of episodes, total number of steps, and parameters,
         defines if the agent still needs to train
     """
-    current = episodes if parameter.type_evaluation == 'episode' else totalSteps
-    #So far, only compares total training time.
-    return current <= parameter.learning_time
+    isTarget = task==target_task
+    
+    #If in the target task, compares the total number of steps, else, calls the termination condition
+    if isTarget:
+         current = totalEpisodes if parameter.type_evaluation == 'episode' else totalSteps
+         keepTraining = current <= parameter.learning_time
+    else:
+        keepTraining = termination.keep_training(task,target_task,curriculum,episodes,steps,totalEpisodes,totalSteps,parameter)
+   
+    
+    
+    return keepTraining
         
-def evaluate_now(episodes,totalSteps,parameter): 
+def evaluate_now(episodes,totalSteps,parameter,lastEpisodeFinished): 
     """
         Defines if the evaluation should be carried out now
     """
-    current = episodes if parameter.type_evaluation == 'episode' else totalSteps
-    #If the number is divisible by 2
-    return current % parameter.evaluation_interval == 0
+    
+    
+    if parameter.type_evaluation == 'episode':
+        evaluate = episodes  % parameter.evaluation_interval == 0 and lastEpisodeFinished
+    else:
+        evaluate = totalSteps % parameter.evaluation_interval == 0 
+   
+    return evaluate
     
     
 def build_objects():
@@ -112,9 +131,24 @@ def build_objects():
             sys.stderr.write("ERROR: missing python module: " +curriculumName + "\n")
             sys.exit(1)
         
-    CURRICULUM = CurriculumClass(seed=parameter.seed)
+    CURRICULUM = CurriculumClass(seed=parameter.seed,agent = AGENT)
     
-    return AGENT,CURRICULUM
+    
+    terminationName = getattr(parameter,"termination")
+    print "Termination: "+terminationName
+    try:
+            TerminationClass = getattr(
+               __import__( (terminationName).lower(),
+                          fromlist=[terminationName]),
+                          terminationName)
+    except ImportError as error:
+            print error
+            sys.stderr.write("ERROR: missing python module: " +terminationName + "\n")
+            sys.exit(1)
+        
+    TERMINATION = TerminationClass()
+    
+    return AGENT,CURRICULUM,TERMINATION
     
 
 def main():
@@ -126,7 +160,7 @@ def main():
     
 
     
-    for trial in range(1,parameter.end_trials+1):
+    for trial in range(parameter.init_trials,parameter.end_trials+1):
         #Folder for results
         logFolder = parameter.log_folder + parameter.algorithm+"-"+parameter.curriculum_alg
         if not os.path.exists(logFolder):
@@ -141,47 +175,53 @@ def main():
         
         print('***** %s: Start Trial' % str(trial))            
         random.seed(parameter.seed+trial)
-        agent,curriculum = build_objects()
+        agent,curriculum,termination = build_objects()
         
         #links the curriculum algorithm with the learning agent
-        curriculum.set_agent(agent)
+        #curriculum.set_agent(agent)
         
         
         #Load target Task
-        target_task = Task(filePath=parameter.task_path)
+        target_task = Task(filePath=parameter.task_path,taskName='target')
         environment_target = GridWorld(treasures=1,pits = target_task.num_pits(),fires = target_task.num_fires(),
                                     sizeX = target_task.get_sizeX(),sizeY = target_task.get_sizeY(),
                                     taskState = target_task.init_state(), limitSteps = 200)
         
         #Generate Curriculum for target task
-        curriculum.generate_curriculum(target_task, workFolder)
+        curriculum.generate_curriculum(target_task, parameter.source_folder,workFolder)
+        
+        #print "--------------- Curriculum---------------------"
+        curriculum.print_result()
   
+        totalEpisodes = 0 
+        totalSteps = 0
         #While there is still tasks to be learned
         while not curriculum.empty_curriculum():
             task = curriculum.draw_task()
-
+            termination.init_task()
             #Initiate task
             environment = GridWorld(treasures=1,pits = task.num_pits(),fires = task.num_fires(),
                                     sizeX = task.get_sizeX(),sizeY = task.get_sizeY(),taskState = task.init_state(), limitSteps = 200)
             environment.start_episode()
             
             
-            
-            episodes = 0 
-            totalSteps = 0
+            episodes = 0
+            steps = 0
             terminal = False
+            lastEpisodeFinished = True
+            
             #Verifies termination condition
-            while keep_training(curriculum,episodes,totalSteps,parameter):
-                #Check if it is time to policy evaluation
-                if evaluate_now(episodes,totalSteps,parameter):
+            while keep_training(task,target_task,curriculum,episodes,steps,totalEpisodes,totalSteps,parameter,termination):
+                #Check if it is time to policy evaluation and the agent is training in the target task
+                if task==target_task and evaluate_now(totalEpisodes,totalSteps,parameter,lastEpisodeFinished):
 #--------------------------------------- Policy Evaluation---------------------------------------------
                     agent.set_exploring(False)
                     agent.connect_env(environment_target)
                     stepsToFinish = 0
                     #Executes the number of testing episodes specified in the parameter
+                    sumR = 0
                     for eval_episode in range(1,parameter.evaluation_duration+1):
                         curGamma = 1.0
-                        sumR = 0
                         eval_step = 0
                         environment_target.start_episode()
 
@@ -201,8 +241,11 @@ def main():
                         stepsToFinish += eval_step
                         
                     stepsToFinish = float(stepsToFinish) / parameter.evaluation_duration
+                    sumR = float(sumR) / parameter.evaluation_duration
                                          
-                    time = episodes if parameter.type_evaluation == 'episode' else totalSteps
+                                         
+                    #time = totalEpisodes if parameter.type_evaluation == 'episode' else totalSteps
+                    time = totalEpisodes if parameter.type_evaluation == 'episode' else totalSteps
                     eval_csv_writer.writerow((time,"{:.2f}".format(stepsToFinish),"{:.15f}".format(sumR)))
                     eval_csv_file.flush()
                     agent.set_exploring(True)  
@@ -210,20 +253,27 @@ def main():
 #-----------------------------------End Policy Evaluation---------------------------------------------
                 #One larning step is performed
                 totalSteps += 1
+                steps += 1
                 agent.connect_env(environment)
                 state = environment.get_state()
                 environment.act(agent.select_action(state))
                 #Process state transition
                 statePrime,action,reward = environment.step()   
                 agent.observe_reward(state,action,statePrime,reward)
+                termination.observe_step(state,action,statePrime,reward)
                 
                 terminal = environment.is_terminal_state()
                 
                 #If the agent reached a terminal state, initiates the new episode
                 if terminal:
+                    totalEpisodes += 1
                     episodes += 1
                     environment.start_episode()
                     agent.finish_episode()
+                    termination.finish_episode()
+                    lastEpisodeFinished = True
+                else:
+                    lastEpisodeFinished = False
             agent.finish_learning()
                 
                 

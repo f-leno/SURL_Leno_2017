@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Nov 21 13:47:01 2016
-DOO-Q implementation
+Created on May 29th, 8:57
+Q-learning simple implementation
 @author: Felipe Leno
 """
 
@@ -11,55 +11,52 @@ import math
 from .agent import Agent
 from common_features import Agent_Utilities
 
-import copy
-import actions
+
+import domain.actions as actions
 
 class QLearning(Agent):
     
-    stateActionTrace = None
+    
     
     alpha = None
-    decayRate = None
+
     
     epsilon = None
-    epsilonDecay = None
+
     
     functions = None
     policy = None
-    friends = None
+    
+    qTable = None
+    
+    initQ = None #Value to initiate Q-table
+
     
 
-    def __init__(self, seed=12345,numAg = 3,alpha=0.1,decayRate=0.9,initialEpsilon=0.5,epsilonDecay=0.999):
+    def __init__(self, seed=12345,alpha=0.1,epsilon=0.1,initQ = 250):
         
         self.functions = Agent_Utilities()
-        self.stateActionTrace = {}
         self.alpha = alpha
-        self.epsilon = initialEpsilon
-        self.epsilonDecay = epsilonDecay
-        self.decayRate = 0.9
-        super(QLearning, self).__init__(seed=seed,numAg = numAg)
+        self.epsilon = epsilon
+        self.qTable = {}
+        self.initQ = initQ
+        super(QLearning, self).__init__(seed=seed)
         
         
-       
-        
-    def get_proc_state(self,agentIndex):
-        """ Returns a processed version of the current state """
-        return self.environment.get_state(agentIndex,True)
-            
+             
         
 
             
     
-    def select_action(self, state,agentIndex):
-        """ When this method is called, the agent executes an action. """
+    def select_action(self, state):
+        """ When this method is called, the agent executes an action based on its Q-table """
         
-        if state == tuple('blind'):
-            return random.choice(self.getPossibleActions())
-        #Computes the best action for each agent        
+        #If exploring, an exploration strategy is executed
         if self.exploring:
-               action =  self.exp_strategy(state)
-           #Else the best action is picked
+            action =  self.exp_strategy(state)
+        #Else the best action is selected
         else:
+            #action =  self.exp_strategy(state)
             action = self.policy_check(state)
         
         return action
@@ -117,27 +114,29 @@ class QLearning(Agent):
         else:
             prob = random.random()
             if prob <= self.epsilon:
-                self.stateActionTrace = {}
                 return random.choice(allActions)
             return self.max_Q_action(state)
            
 
     
-    def get_Q_size(self,agentIndex):
+    def get_Q_size(self):
         """Returns the size of the QTable"""
         return len(self.qTable)
         
     
-    def observe_reward(self,state,action,statePrime,reward,agentIndex):
+    def observe_reward(self,state,action,statePrime,reward):
         """Performs the standard Q-Learning Update"""
         if self.exploring:
             qValue= self.readQTable(state,action)
             V = self.get_max_Q_value(statePrime)        
             newQ = qValue + self.alpha * (reward + self.gamma * V - qValue)
             self.qTable[(state,action)] = newQ
-            if self.environment.is_terminal_state():
-                self.epsilon = self.epsilon * self.epsilonDecay
-                  
+
+    def readQTable(self,state,action):             
+        """Returns one value from the Qtable"""
+        if not (state,action) in self.qTable:
+            self.qTable[(state,action)] = self.initQ
+        return self.qTable[(state,action)] 
         
         
         

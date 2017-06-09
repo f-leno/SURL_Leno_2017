@@ -22,6 +22,8 @@ class Agent(object):
     exploring = None
     seed = None
     training_steps_total = None
+    currentTask = None
+    curriculum = None
     
     
     gamma = 0.9  #Discount factor for comparing proposals
@@ -56,6 +58,11 @@ class Agent(object):
     def set_exploring(self, exploring):
         """ The agent keeps track if it should explore in the current state (used for evaluations) """
         self.exploring = exploring
+        
+    def set_current_task(self,task):
+        self.currentTask = task
+    def set_curriculum(self,curriculum):
+        self.curriculum = curriculum
 
 
 #    def saveQTable(self,folder,trial):

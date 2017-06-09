@@ -71,7 +71,7 @@ class GridWorld(object):
         self.sizeY = sizeY
         
         #If a evaluation episode is informed, the code loads it
-        self.taskInitialPositions = self.load_task_state(taskState)
+        self.taskInitialPositions = taskState
 
         self.treasurePositions = [None]*treasures
         self.pitPositions = [None]*pits
@@ -82,20 +82,7 @@ class GridWorld(object):
         self.currentSteps = 0
         
     
-    def load_task_state(self,taskState):
-        """Load a textual description of the state to an internal state
-            Objects are separated by commas, in the format <type>:<xPosic>-<yPosic>
-            type can be: 'agent', 'treasure',pit, or fire
-        """
-        objects = taskState.split(',')
-        
-        taskInfo = []
-        for obj in objects:
-            clasSpt = obj.split(":")
-            posics = clasSpt[1].split('-') 
-            taskInfo.append([clasSpt[0],int(posics[0]),int(posics[1])])
-            
-        return taskInfo
+
             
         
         
@@ -173,9 +160,9 @@ class GridWorld(object):
     def get_state(self):
         """Returns the state in the point of view of the agent"""
         
-        
-        #if self.lastTerminal and not self.terminalSteps:
-        #    return tuple('end')
+        #All successful states are equal
+        if self.lastTerminal:
+            return tuple(tuple(('t',0,0)))
             
         pitClass = 'p'
         treasureClass = 't'

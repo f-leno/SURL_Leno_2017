@@ -36,8 +36,14 @@ class GraphicsGridworld():
         self.sizeX = environment.sizeX
         self.sizeY = environment.sizeY
         #Calculates size of each square
-        self.squareX = self.width / self.sizeX
-        self.squareY = self.height / self.sizeY
+        if self.squareX==1:
+             self.width / self.sizeY
+        else:
+            self.squareX = self.width / self.sizeX
+        if self.sizeY==1:
+             self.squareY = self.height / self.sizeX
+        else:
+             self.squareY = self.height / self.sizeY
         
         image = Image.open(self.imageFolder + "/agent.png")
         image = image.resize((self.squareX, self.squareY), Image.ANTIALIAS)
