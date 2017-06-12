@@ -20,13 +20,13 @@ class PITAMQLearning(QLearning):
     calculatedPITAM = {}
     
     useBias = False
-    biasValue = 0.001
+    biasValue = 0.01
     
     calcAverage = True #If true, the average value is transferred, if false, the maximum is transferred.
     
     savedPot = {}
     
-    def __init__(self, seed=12345,alpha=0.1,epsilon=0.1,initQ=250):
+    def __init__(self, seed=12345,alpha=0.1,epsilon=0.1,initQ=0):
         
         super(PITAMQLearning, self).__init__(seed=seed,alpha=alpha,initQ=initQ)
         
