@@ -22,21 +22,25 @@ class Task(object):
     
     taskString = None
     
-    def __init__(self, filePath=None,taskName="noName"):
+    def __init__(self, filePath=None,taskName="noName",taskData=None):
         """ The source file must be a text file specified as follows:
             <sizeX>;<sizeY>;<objects>
             where <objects> is any number of objects separated with commas and obeying the format:
             <type>:<xPosic>-<yPosic>,<type>:<xPosic>-<yPosic>
             
         """
-        #Read task file
-        with open(filePath, 'r') as content_file:
-            content = content_file.read()
-            
         self.name = taskName
-        
+        #Read task file
+        if filePath != None:
+            with open(filePath, 'r') as content_file:
+                content = content_file.read()
+        else:
+            #Read task data
+            content = taskData
+            
         #get size the grid size
         sep = content.split(';')
+            
         self.sizeX = int(sep[0])
         self.sizeY = int(sep[1])
         

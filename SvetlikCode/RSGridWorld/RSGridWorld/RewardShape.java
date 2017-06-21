@@ -131,8 +131,8 @@ public class RewardShape {
         /*
          * RewardShaping experiments
          */
-        example.findOptimalTraining();
-        example.generateWeakExp(); //everything is pretty much stuffed into this
+        //example.findOptimalTraining();
+       // example.generateWeakExp(); //everything is pretty much stuffed into this
         
         /*example = new RewardShape("domains/nstep/goal4.dat", false);
         LearningPair ea = example.QPolicyEval(outputPath,0.25);

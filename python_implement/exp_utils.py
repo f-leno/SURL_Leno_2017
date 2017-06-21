@@ -266,7 +266,7 @@ def draw_graph(source1 = None, name1 = "Algo1", significant1=None,
         plt.ylabel('Steps until completed', fontsize=fontSize, fontweight='bold')
     elif what == "__SUMMARY_rewards":
         #plt.title('Goal Percentage per Trial')
-        plt.ylabel('Cummulative Reward', fontsize=fontSize, fontweight='bold')
+        plt.ylabel('Cumulative Reward', fontsize=fontSize, fontweight='bold')
     else:
         #plt.title('Unknown')
         plt.ylabel('Unknown')

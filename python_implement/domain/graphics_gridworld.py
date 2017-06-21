@@ -31,7 +31,6 @@ class GraphicsGridworld():
     def __init__(self,environment):
         """Visual illustration of the Gridworld domain. Needs a link with the GridWorld class (environment.py)"""
         self.window = Tkinter.Tk()
-        self.canvas = Tkinter.Canvas(self.window,width=self.width, height=self.height)
         
         self.sizeX = environment.sizeX
         self.sizeY = environment.sizeY
@@ -44,6 +43,10 @@ class GraphicsGridworld():
              self.squareY = self.height / self.sizeX
         else:
              self.squareY = self.height / self.sizeY
+        
+        self.canvas = Tkinter.Canvas(self.window,width=self.squareX * self.sizeX, height=self.squareY * self.sizeY)
+        
+        
         
         image = Image.open(self.imageFolder + "/agent.png")
         image = image.resize((self.squareX, self.squareY), Image.ANTIALIAS)
@@ -64,7 +67,7 @@ class GraphicsGridworld():
         #Link to environment object        
         self.environment = environment
         
-        self.draw_lines(self.sizeX,self.sizeY)
+        self.draw_lines(self.squareX * self.sizeX,self.sizeY)
         self.update_screen()
         
         

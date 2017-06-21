@@ -155,13 +155,35 @@ class GridWorld(object):
         """Returns if the agent can see anything"""
         return False
     
+    def object_reward(self,class_obj,state):
+        """Returns a reward related to the object"""
+        reward = 0
         
+        if class_obj == 't': #treasure
+            if state == (0,0):
+                reward = self.capturedReward
+        elif class_obj == 'f': #Fire
+            if state == (0,1) or state == (1,0): #next to fire
+                reward = self.nextFireReward
+            if state == (0,0): #Stepped in fire
+                reward = self.intoFireReward
+        elif class_obj == 'p': #Pit
+            if state == (0,0):
+                reward = self.pitReward
         
-    def get_state(self):
-        """Returns the state in the point of view of the agent"""
+        if reward == 0:
+            reward = self.defaultReward
+            
+        return reward
+        
+    def get_state(self,orderedSens=False):
+        """Returns the state in the point of view of the agent
+            If onderedSens = True, returns a tuple of sensations rather than a set. Usefull to track
+            changes of object states
+        """
         
         #All successful states are equal
-        if self.lastTerminal:
+        if self.lastTerminal and not orderedSens:
             return tuple(tuple(('t',0,0)))
             
         pitClass = 'p'
@@ -171,8 +193,13 @@ class GridWorld(object):
         selfx = self.agentPositions[0]
         selfy = self.agentPositions[1]
         
-        #Set of agent's sensations (order doesn't matter)
-        sensations = set()       
+        #Set of agent's sensations (order usually doesn't matter)
+        if orderedSens:
+            sensations = []
+        else:
+            sensations = set()       
+        
+        
             
         
         #Including treasure sensations
@@ -180,21 +207,33 @@ class GridWorld(object):
             #Positions are relative to the agent            
             offsetX = self.treasurePositions[i][0] - selfx
             offsetY = self.treasurePositions[i][1] - selfy
-            sensations.add((treasureClass,offsetX,offsetY))
+            if orderedSens:
+                sensations.append((treasureClass,offsetX,offsetY))
+            else:
+                sensations.add((treasureClass,offsetX,offsetY))
+            
         
         #Including pit sensations
         for i in range(self.numberPits):
             #Positions are relative to the agent            
             offsetX = self.pitPositions[i][0] - selfx
             offsetY = self.pitPositions[i][1] - selfy
-            sensations.add((pitClass,offsetX,offsetY))           
+            if orderedSens:
+                sensations.append((pitClass,offsetX,offsetY))           
+            else:
+                sensations.add((pitClass,offsetX,offsetY))           
+                   
             
         #Including fire sensations
         for i in range(self.numberFires):
             #Positions are relative to the agent            
             offsetX = self.firePositions[i][0] - selfx
             offsetY = self.firePositions[i][1] - selfy
-            sensations.add((fireClass,offsetX,offsetY)) 
+            if orderedSens:
+                sensations.append((fireClass,offsetX,offsetY)) 
+            else:
+                sensations.add((fireClass,offsetX,offsetY)) 
+            
         
           
         #Making the sensation set hashable
@@ -289,11 +328,11 @@ class GridWorld(object):
         self.check_terminal()
         
         #Updating captured treasure
-        for i in range(self.numberTreasures): 
-            if self.caught[i]:
-                if self.treasurePositions[i][0] != self.outGridValue:
-                    self.treasurePositions[i][0] = self.outGridValue
-                    self.treasurePositions[i][1] = self.outGridValue
+        #for i in range(self.numberTreasures): 
+        #    if self.caught[i]:
+        #        if self.treasurePositions[i][0] != self.outGridValue:
+        #            self.treasurePositions[i][0] = self.outGridValue
+        #            self.treasurePositions[i][1] = self.outGridValue
         
         if self.reward == 0:
                 self.reward = self.defaultReward

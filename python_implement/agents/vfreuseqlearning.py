@@ -21,7 +21,7 @@ class VFReuseQLearning(QLearning):
     
     savedPot = {}
     
-    def __init__(self, seed=12345,alpha=0.1,epsilon=0.1,initQ=0,calcAverage=False):
+    def __init__(self, seed=12345,alpha=0.5,epsilon=0.1,initQ=0,calcAverage=True):
         
         super(VFReuseQLearning, self).__init__(seed=seed,alpha=alpha,epsilon=epsilon,initQ=initQ)
         

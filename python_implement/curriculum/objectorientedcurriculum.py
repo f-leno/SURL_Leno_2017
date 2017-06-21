@@ -14,9 +14,12 @@ import OOUtil
 
 class ObjectOrientedCurriculum(SvetlikCurriculum):
     
-    def generate_curriculum(self,target_task, sourceFolder,workFolder,thresholdTask = 3.2):
+    def generate_curriculum(self,target_task, sourceFolder,workFolder,thresholdTask = 4):
         super(ObjectOrientedCurriculum,self).generate_curriculum(target_task=target_task,sourceFolder=sourceFolder,
              workFolder=workFolder,thresholdTask=thresholdTask)
+    def generate_curriculum_from_tasks(self,target_task, taskList,thresholdTask = 3.2):
+        super(ObjectOrientedCurriculum,self).generate_curriculum_from_tasks(target_task=target_task,taskList=taskList,
+             thresholdTask=thresholdTask)
         
           
     def transfer_potential(self,currentTask,target_task,curriculumTasks):

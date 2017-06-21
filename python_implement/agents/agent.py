@@ -26,7 +26,7 @@ class Agent(object):
     curriculum = None
     
     
-    gamma = 0.9  #Discount factor for comparing proposals
+    gamma = 0.9#0.9  #Discount factor for comparing proposals
     
     def __init__(self, seed=12345):
         """ Initializes an agent. """
@@ -61,6 +61,10 @@ class Agent(object):
         
     def set_current_task(self,task):
         self.currentTask = task
+       # if task=='target':
+       #     self.alpha=0.3
+       # else:
+       #     self.alpha=0.3
     def set_curriculum(self,curriculum):
         self.curriculum = curriculum
 

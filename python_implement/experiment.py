@@ -14,12 +14,13 @@ import csv
 import random
 from domain.environment import GridWorld
 from domain.task import Task
+from domain.graphics_gridworld import GraphicsGridworld
 import os
 #from cmac import CMAC
 
 
 #from agents.agent import Agent
-
+debugImage=False
   
 
 
@@ -45,9 +46,9 @@ def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('-t','--task_path', default='./tasks/target.task')
     parser.add_argument('-a','--algorithm',  default='Dummy') 
-    parser.add_argument('-e','--learning_time',type=int, default=25000)
+    parser.add_argument('-e','--learning_time',type=int, default=8000)
     parser.add_argument('-te','--type_evaluation',choices=['episode','steps'], default='steps')
-    parser.add_argument('-i','--evaluation_interval',type=int, default=100)
+    parser.add_argument('-i','--evaluation_interval',type=int, default=50)
     parser.add_argument('-d','--evaluation_duration',type=int, default=2)
     parser.add_argument('-s','--seed',type=int, default=12345)
     parser.add_argument('-l','--log_folder',default='./log/')
@@ -158,6 +159,9 @@ def main():
     #Folder for temp files
     workFolder = parameter.temp_folder + parameter.algorithm + '/'
     
+    
+    
+    
 
     
     for trial in range(parameter.init_trials,parameter.end_trials+1):
@@ -203,7 +207,8 @@ def main():
             environment = GridWorld(treasures=1,pits = task.num_pits(),fires = task.num_fires(),
                                     sizeX = task.get_sizeX(),sizeY = task.get_sizeY(),taskState = task.init_state(), limitSteps = 200)
             environment.start_episode()
-            
+            if debugImage:
+                    g = GraphicsGridworld(environment)
             
             episodes = 0
             steps = 0
@@ -255,10 +260,13 @@ def main():
                 totalSteps += 1
                 steps += 1
                 agent.connect_env(environment)
+                
                 state = environment.get_state()
                 environment.act(agent.select_action(state))
                 #Process state transition
                 statePrime,action,reward = environment.step()   
+                if debugImage:
+                    g.update_state()
                 agent.observe_reward(state,action,statePrime,reward)
                 termination.observe_step(state,action,statePrime,reward)
                 
@@ -275,6 +283,8 @@ def main():
                 else:
                     lastEpisodeFinished = False
             agent.finish_learning()
+            if debugImage:
+                        g.close()
                 
                 
         #Close result files

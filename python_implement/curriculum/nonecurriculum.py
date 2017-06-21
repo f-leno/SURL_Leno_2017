@@ -37,7 +37,9 @@ class NoneCurriculum(Curriculum):
     def previous_tasks(self):
         return []
 
-    
+    def generate_curriculum_from_tasks(self,target_task, taskList):
+        self.target_task = target_task
+        self.usedTask = False    
     def print_result(self):
         """Prints the CUrriculum"""
         pass

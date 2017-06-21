@@ -86,7 +86,7 @@ def get_PITAM_mappings(state,action,previousTasks,previousQTables,getOtherAction
                     #Is the set of states contained?
                     if setState.issuperset(stateSimple) or setState.issubset(stateSimple):
                         #The number of common objects is the smaller number of objects
-                        numComObj = min(len(stateSimple),len(setState))
+                        numComObj = min(len(stateSimple),len(setState)) 
                         #Get the state-action pair, similarity, and q-value
                         PITAMMappings.append([stateAction,numComObj,qTable[stateAction]])
                         
