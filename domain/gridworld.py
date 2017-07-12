@@ -7,8 +7,58 @@ Environment for the gridworld domain
 """
 from scipy.spatial import distance
 import actions
+from domain import Domain
+from gridworldtask import GridWorldTask
 
-class GridWorld(object):
+
+class GridWorld(Domain):
+    """DOmain Generator"""
+    def build_environment(self,taskFile,limitSteps,taskName = None):
+        """Instantiates an object representing the environment in this domain.
+            --taskFile = The path for a file containing the description of a task in this domain
+            --limitSteps = The maximum number of steps to be executed per episode.
+            --taskName = optional parameter defining the task name.
+            returns:
+                --environment: The desired environment
+                --task: The task according to the given file.
+        """
+        #Building the task
+        task = GridWorldTask(filePath=taskFile,taskName=taskName)
+        
+        #Bulding the enviornment
+        environment = GridWorldEnv(treasures=1,pits = task.num_pits(),fires = task.num_fires(),
+                                    sizeX = task.get_sizeX(),sizeY = task.get_sizeY(),
+                                    taskState = task.init_state(), limitSteps = limitSteps)
+        
+        return environment,task
+        
+       
+    def build_environment_from_task(self,task,limitSteps):
+        """Builds the environment from previously built tasks.
+           --task = The Task Object
+           --limitSteps = The maximum number of steps to be executed per episode.
+           returns:
+               --environment: The desired environment
+        """
+        #Bulding the enviornment
+        environment = GridWorldEnv(treasures=1,pits = task.num_pits(),fires = task.num_fires(),
+                                    sizeX = task.get_sizeX(),sizeY = task.get_sizeY(),
+                                    taskState = task.init_state(), limitSteps = limitSteps)
+        
+        return environment
+
+
+
+
+
+
+
+
+
+
+
+class GridWorldEnv(object):
+    """ GridWorld Environment Class"""
     #Environment Size    
     sizeX = None
     sizeY = None

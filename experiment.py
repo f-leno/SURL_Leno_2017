@@ -12,8 +12,8 @@ import sys
 
 import csv
 import random
-from domain.environment import GridWorld
-from domain.task import Task
+#from domain.environment import GridWorld
+
 from domain.graphics_gridworld import GraphicsGridworld
 import os
 #from cmac import CMAC
@@ -40,6 +40,7 @@ def get_args():
             --end_trials: final trial
             --curriculum_alg: Algorithm for Curriculum generation
             --termination: Class for termination Condition
+            --domain: Class indicating the domain
             
     
     """
@@ -54,10 +55,11 @@ def get_args():
     parser.add_argument('-l','--log_folder',default='./log/')
     parser.add_argument('-sf','--source_folder',default='./tasks/source/')
     parser.add_argument('-tf','--temp_folder',default='./temp/')
-    parser.add_argument('-it','--init_trials',type=int, default=1)
-    parser.add_argument('-et','--end_trials',type=int, default=10000)
+    parser.add_argument('-it','--init_trials',type=int, default=10001)
+    parser.add_argument('-et','--end_trials',type=int, default=10002)
     parser.add_argument('-ca','--curriculum_alg',default='NoneCurriculum')
     parser.add_argument('-ter','--termination',default="Termination10Episodes")
+    parser.add_argument('-do','--domain',default="GridWorld")
      
 
     return parser.parse_args()
@@ -149,7 +151,21 @@ def build_objects():
         
     TERMINATION = TerminationClass()
     
-    return AGENT,CURRICULUM,TERMINATION
+    domainName = getattr(parameter,"domain")
+    print "Domain: "+domainName
+    try:
+            DomainClass = getattr(
+               __import__('domain.' +  (domainName).lower(),
+                          fromlist=[domainName]),
+                          domainName)
+    except ImportError as error:
+            print error
+            sys.stderr.write("ERROR: missing python module: " +domainName + "\n")
+            sys.exit(1)
+        
+    DOMAIN = DomainClass()
+    
+    return AGENT,CURRICULUM,TERMINATION,DOMAIN
     
 
 def main():
@@ -179,17 +195,15 @@ def main():
         
         print('***** %s: Start Trial' % str(trial))            
         random.seed(parameter.seed+trial)
-        agent,curriculum,termination = build_objects()
+        agent,curriculum,termination,domain = build_objects()
         
         #links the curriculum algorithm with the learning agent
         #curriculum.set_agent(agent)
         
         
         #Load target Task
-        target_task = Task(filePath=parameter.task_path,taskName='target')
-        environment_target = GridWorld(treasures=1,pits = target_task.num_pits(),fires = target_task.num_fires(),
-                                    sizeX = target_task.get_sizeX(),sizeY = target_task.get_sizeY(),
-                                    taskState = target_task.init_state(), limitSteps = 200)
+        
+        environment_target,target_task = domain.build_environment(taskFile=parameter.task_path,limitSteps=200,taskName = 'target')
         
         #Generate Curriculum for target task
         curriculum.generate_curriculum(target_task, parameter.source_folder,workFolder)
@@ -204,8 +218,7 @@ def main():
             task = curriculum.draw_task()
             termination.init_task()
             #Initiate task
-            environment = GridWorld(treasures=1,pits = task.num_pits(),fires = task.num_fires(),
-                                    sizeX = task.get_sizeX(),sizeY = task.get_sizeY(),taskState = task.init_state(), limitSteps = 200)
+            environment = domain.build_environment_from_task(task=task,limitSteps=200)
             environment.start_episode()
             if debugImage:
                     g = GraphicsGridworld(environment)

@@ -1,105 +1,35 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
-Created on Fri May 26 14:18:58 2017
-
-Class to store all task parameters (can be built from text files)
-
+Created on Wed Jul 12 15:38:57 2017
+ Abstract Class for Task Classes
 @author: Felipe Leno
 """
+import abc
 
 class Task(object):
-    
-    #Task Parameters and initial state
-    sizeX     = None
-    sizeY     = None
-    pits      = None
-    fires     = None
-    treasures = None
-    initState = None
-    
+    """Abstract class describing a task"""
     name      = None
     
-    taskString = None
+    @abc.abstractmethod      
+    def init_state(self):
+        pass
+    @abc.abstractmethod      
+    def load_task_state(self,taskState):
+        """Loads a textual description of the state to an internal state
+            Objects are separated by commas, in the format <type>:<xPosic>-<yPosic>
+            type can be: 'agent', 'treasure',pit, or fire for the gridworlddomain
+        """
+        pass
+    def __str__(self):
+        return self.name  
     
     def __init__(self, filePath=None,taskName="noName",taskData=None):
-        """ The source file must be a text file specified as follows:
-            <sizeX>;<sizeY>;<objects>
-            where <objects> is any number of objects separated with commas and obeying the format:
-            <type>:<xPosic>-<yPosic>,<type>:<xPosic>-<yPosic>
-            
-        """
         self.name = taskName
-        #Read task file
-        if filePath != None:
-            with open(filePath, 'r') as content_file:
-                content = content_file.read()
-        else:
-            #Read task data
-            content = taskData
-            
-        #get size the grid size
-        sep = content.split(';')
-            
-        self.sizeX = int(sep[0])
-        self.sizeY = int(sep[1])
         
-        self.initState = self.load_task_state(sep[2])
         
-        #Used for recovering the initial state
-        self.taskString = sep[2]
         
-        #Extracts the number of objects of each type.
-        self.treasures = sep[2].count('treasure')
-        self.pits = sep[2].count('pit')
-        self.fires = sep[2].count('fire')
         
-    def num_pits(self):
-        return self.pits
-    def task_features(self):
-        return (self.fires,self.pits)
-        
-    def num_fires(self):
-        return self.fires
-        
-    def get_sizeX(self):
-        return self.sizeX
-        
-    def get_sizeY(self):
-        return self.sizeY
-        
-    def num_treasures(self):
-        return self.treasures
-    def init_state(self):
-        return self.initState
-       
-   
-    def __hash__(self):
-        """Returns a hash for the task"""
-        #taskTuple = tuple([self.sizeX,self.sizeY,tuple(self.initState)])
-        taskTuple = tuple([self.sizeX,self.sizeY,self.name])
-        return hash(taskTuple)
-    
-    def __str__(self):
-        return self.name
-    
-    def load_task_state(self,taskState):
-        """Load a textual description of the state to an internal state
-            Objects are separated by commas, in the format <type>:<xPosic>-<yPosic>
-            type can be: 'agent', 'treasure',pit, or fire
-        """
-        objects = taskState.split(',')
-        
-        taskInfo = []
-        for obj in objects:
-            clasSpt = obj.split(":")
-            posics = clasSpt[1].split('-') 
-            taskInfo.append([clasSpt[0],int(posics[0]),int(posics[1])])
-            
-        import operator
-        taskInfo.sort(key=operator.itemgetter(0, 1, 2))
-    
-        return taskInfo
         
         
 def transfer_potential(sourceTask,targetTask):
@@ -119,7 +49,7 @@ def transfer_potential(sourceTask,targetTask):
             #Iterates over all objects in the source task
             for obj in sourceTask.init_state():
                 #If it is an obstacle, stores the distance
-                if obj[0] in ["fire",'pit'] :
+                if obj[0] in sourceTask.relevantClasses :
                     distances.append([(x - obj[1],y - obj[2],obj[0])]) 
             #Stores distances for that position
             locationTraceSource.append(distances)
@@ -131,7 +61,7 @@ def transfer_potential(sourceTask,targetTask):
             #Iterates over all objects in the source task
             for obj in targetTask.init_state():
                 #If it is an obstacle, stores the distance
-                if obj[0] in ["fire",'pit'] :
+                if obj[0] in targetTask.relevantClasses :
                     distances.append([(x - obj[1],y - obj[2],obj[0])]) 
             #Stores distances for that position
             locationTraceTarget.append(distances)
@@ -152,4 +82,3 @@ def is_contained(featuresSource,featuresTarget):
     """Returns if the features of the target task contains all features from the
     source task"""
     return featuresSource[0] <= featuresTarget[0] and featuresSource[1] <= featuresTarget[1] 
-

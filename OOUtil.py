@@ -29,6 +29,10 @@ def task_similarity(source_task,target_task):
             quantClass[obj[0]] += 1
         
     objValue = 0              
+    
+    #--------------------------------------------------------------------------
+    # This code should be modified to a domain-independent code
+    #----------------------------------------------------------------------------
     #After counting the objects, the value for each class is defined
     for key in quantClass.keys():
         if key=='treasure':
@@ -46,6 +50,10 @@ def task_similarity(source_task,target_task):
     #intersection of states
     intersecStates = float(min(source_task.get_sizeX(),target_task.get_sizeX()) * min(source_task.get_sizeY(),target_task.get_sizeY()))
     intersecStates /= target_task.get_sizeX()*target_task.get_sizeY()
+    
+    #--------------------------------------------------------------------------
+    # End of code to be changed
+    #----------------------------------------------------------------------------
     
                          
     similarity = objValue + intersecStates
